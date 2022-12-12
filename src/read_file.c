@@ -607,25 +607,28 @@ void ascii_convert(char* target, int is_file_name) {
 		strncpy(temp_buffer, examiner + strlen("&#"), ascii_length - strlen("&#;"));
 		ascii_value = (char)strtol(temp_buffer, NULL, 10);
 
-		// checks if the operation is for file name, then if the character is illegal
-		if (is_file_name && (ascii_value == '\\' || ascii_value == '/' || ascii_value == ':' || ascii_value == '*' || ascii_value == '?' ||
-			ascii_value == '"' || ascii_value == '<' || ascii_value == '>' || ascii_value == '|')) {
-			// copy the original ascii back into temp buffer
-			snprintf(temp_buffer, ascii_length + 1, "%s", examiner);
-			// copy original string
-			memcpy(insert_point, temp_buffer, ascii_length);
-			insert_point += ascii_length;
-		}
-		else {
-			snprintf(temp_buffer, 2, "%c", ascii_value);
+		snprintf(temp_buffer, 2, "%c", ascii_value);
 
-			// copy replacement string, 1 character long
-			memcpy(insert_point, temp_buffer, 1);
-			insert_point += 1;
-		}
+		// copy replacement string, 1 character long
+		memcpy(insert_point, temp_buffer, 1);
+		insert_point += 1;
+
 
 		// adjust pointers, move on
 		tmp = examiner + ascii_length;
+	}
+
+	// These characters cannot be present in filenames in Windows
+	if (is_file_name) {
+		str_replace(buffer, "\\", "");
+		str_replace(buffer, "/", "");
+		str_replace(buffer, ":", "");
+		str_replace(buffer, "*", "");
+		str_replace(buffer, "?", "");
+		str_replace(buffer, "\"", "");
+		str_replace(buffer, "<", "");
+		str_replace(buffer, ">", "");
+		str_replace(buffer, "|", "");
 	}
 
 	// write altered string back to target
