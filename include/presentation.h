@@ -2,6 +2,6 @@
 
 #include "parameters.h"
 
-void welcome();
+u_int welcome();
 char** receive_links(int*);
 void goodbye();

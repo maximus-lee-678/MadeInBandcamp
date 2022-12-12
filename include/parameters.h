@@ -6,11 +6,12 @@
 #include <curl/curl.h>
 #include <direct.h>
 #include <conio.h>
+#include <errno.h>
 
-#define WEBPAGE_DUMP "temp/webpage.txt"
-#define IMAGE_DUMP "temp/cover.jpg"
-#define TEMP_DIRECTORY "temp/"
-#define SONG_DIRECTORY "songs/"
+#define WEBPAGE_DUMP "./temp/webpage.txt"
+#define IMAGE_DUMP "./temp/cover.jpg"
+#define TEMP_DIRECTORY "./temp/"
+#define SONG_DIRECTORY "./songs/"
 #define SONG_EXTENSION ".mp3"
 
 #define UNIVERSAL_LENGTH 512

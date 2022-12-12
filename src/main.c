@@ -10,12 +10,20 @@ int main(void)
 {
 	int fail_code = 0;
 
-	welcome();
+	if (welcome()) {
+		fprintf(stderr, "[x] Terminated due to Desktop detection\n");
+		goodbye();
+		return -2;
+	}
 
 	int number_websites = 0;
 	char** website_links = receive_links(&number_websites);
 
-	_mkdir(TEMP_DIRECTORY);
+	if (_mkdir(TEMP_DIRECTORY) && errno != EEXIST) {
+		fprintf(stderr, "[x] File creation issue: Code %d\n", errno);
+		goodbye();
+		return -3;
+	}
 
 	for (int i = 0; i < number_websites; i++) {
 		fprintf(stdout, "\n");

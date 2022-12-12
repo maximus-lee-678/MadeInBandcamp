@@ -1,6 +1,6 @@
 #include "../include/presentation.h"
 
-void welcome() {
+u_int welcome() {
 	const char* openers[UNIVERSAL_LENGTH] = {
 		"This may be beyond your comprehension but I will part with this last remark. Time will accelerate.",
 		"I did not obtain this power to end your lives, nor does this ability promise supreme strength.",
@@ -12,7 +12,17 @@ void welcome() {
 	int random = rand() % 4;
 
 	fprintf(stdout, "[~] %s\n", openers[random]);
-	fprintf(stdout, "[~] Enter a Bandcamp link (*** to finish)\n");
+
+	char pwd[FILENAME_MAX];
+	_getcwd(pwd, FILENAME_MAX);
+	if (strstr(pwd, "\\Desktop\\")) {
+		fprintf(stderr, "[!] This program does not function on the Desktop directory, I've not a clue why. Move it somewhere else!\n");
+		return 1;
+	}
+	else {
+		fprintf(stdout, "[~] Enter a Bandcamp album link (*** to finish)\n");
+		return 0;
+	}
 }
 
 char** receive_links(int* number_websites) {
