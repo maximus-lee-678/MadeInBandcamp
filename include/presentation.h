@@ -2,6 +2,8 @@
 
 #include "parameters.h"
 
+#define EXIT_STRING "***"
+
 u_int welcome();
-char** receive_links(int*);
+link_struct* receive_links();
 void goodbye();

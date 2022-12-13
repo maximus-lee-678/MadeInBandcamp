@@ -1,56 +1,54 @@
 #include "../include/read_file.h"
 
-album_details* get_album_details(int* fail_code) {
-	album_details* album = (album_details*)malloc(sizeof(album_details));
-	mallocChecker(album);
-
+int get_album_details(album_details* album) {
+	int fail_code = 0;
 	FILE* fp = fopen(WEBPAGE_DUMP, "r");
 
-	*fail_code = verify_validity(fp, album);
-	if (*fail_code) {
+	fail_code = verify_validity(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 	fseek(fp, 0, SEEK_SET);	// Reset file pointer
-	*fail_code = get_albumtitle_composer(fp, album);
-	if (*fail_code) {
+	fail_code = get_title_fields(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 	fseek(fp, 0, SEEK_SET);
-	*fail_code = get_year(fp, album);
-	if (*fail_code) {
+	fail_code = get_year(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 	fseek(fp, 0, SEEK_SET);
-	*fail_code = get_album_art_link(fp, album);
-	if (*fail_code) {
+	fail_code = get_album_art_link(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 	fseek(fp, 0, SEEK_SET);
-	*fail_code = get_number_songs(fp, album);
-	if (*fail_code) {
+	fail_code = get_number_songs(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 	fseek(fp, 0, SEEK_SET);
-	*fail_code = get_song_titles(fp, album);
-	if (*fail_code) {
+	fail_code = get_song_titles(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 	fseek(fp, 0, SEEK_SET);
-	*fail_code = get_song_links(fp, album);
-	if (*fail_code) {
+	fail_code = get_song_links(fp, album);
+	if (fail_code) {
 		fclose(fp);
-		return NULL;
+		return fail_code;
 	}
 
 	fclose(fp);
 
-	// 7. Generate file names
+	// Generate file names
 	album->file_names = (char**)malloc(album->song_count * sizeof(char*));
 	mallocChecker(album->file_names);
 	for (int i = 0; i < album->song_count; i++)
@@ -60,10 +58,57 @@ album_details* get_album_details(int* fail_code) {
 	}
 
 	for (int i = 0; i < album->song_count; i++) {
-		sprintf(album->file_names[i], "%s - %s - %02d %s%s ", album->artist, album->album, i + 1, album->song_titles[i], SONG_EXTENSION);
+		sprintf(album->file_names[i], "%s - %s - %02d %s%s", album->artist, album->album, i + 1, album->song_titles[i], SONG_EXTENSION);
 	}
 
-	return album;
+	return 0;
+}
+
+int get_track_details(album_details* album) {
+	int fail_code = 0;
+	FILE* fp = fopen(WEBPAGE_DUMP, "r");
+
+	fail_code = verify_validity(fp, album);
+	if (fail_code) {
+		fclose(fp);
+		return fail_code;
+	}
+	fseek(fp, 0, SEEK_SET);	// Reset file pointer
+	fail_code = get_title_fields(fp, album);
+	if (fail_code) {
+		fclose(fp);
+		return fail_code;
+	}
+	fseek(fp, 0, SEEK_SET);
+	fail_code = get_year(fp, album);
+	if (fail_code) {
+		fclose(fp);
+		return fail_code;
+	}
+	fseek(fp, 0, SEEK_SET);
+	fail_code = get_album_art_link(fp, album);
+	if (fail_code) {
+		fclose(fp);
+		return fail_code;
+	}
+	fseek(fp, 0, SEEK_SET);
+	fail_code = get_song_links(fp, album);
+	if (fail_code) {
+		fclose(fp);
+		return fail_code;
+	}
+
+	fclose(fp);
+
+	// Generate file names
+	album->file_names = (char**)malloc(album->song_count * sizeof(char*));
+	mallocChecker(album->file_names);
+	album->file_names[0] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
+	mallocChecker(album->file_names[0]);
+
+	sprintf(album->file_names[0], "%s - %s%s", album->artist, album->song_titles[0], SONG_EXTENSION);
+
+	return 0;
 }
 
 // 1. Verify if link leads to album
@@ -117,9 +162,10 @@ u_int verify_validity(FILE* fp, album_details* album) {
 	return 0;
 }
 
-// 2. Get Album Title / Composer
+// 2. Get (Album Title / Song Name) and Composer
 // Can be found in the <title> element AFTER containing
-u_int get_albumtitle_composer(FILE* fp, album_details* album) {
+// In album, first field is Album Title, in track, first field is song name
+u_int get_title_fields(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
@@ -164,19 +210,41 @@ u_int get_albumtitle_composer(FILE* fp, album_details* album) {
 	}
 
 	size_t str_length = 0;
-	examiner += strlen("<title>");							// Seek to start of album title (<title>example -> example)
-	str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example</title> -> measure until before |)
-	str_length -= 1;										// String contains " ", -1 to truncate
-	strncpy(album->album, examiner, str_length);			// Copy artist
-	album->album[str_length] = '\0';						// Provide a terminator
+	if (!strcmp(album->operation_type, "album")) {
+		examiner += strlen("<title>");							// Seek to start of album title (<title>example -> example)
+		str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example</title> -> measure until before |)
+		str_length -= 1;										// String contains " ", -1 to truncate
+		strncpy(album->album, examiner, str_length);			// Copy artist
+		album->album[str_length] = '\0';						// Provide a terminator
 
-	examiner = strstr(examiner, "|");						// Seek to start of album artist
-	examiner += 2;											// Ignore 2 characters of "| "
-	str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
-	strncpy(album->artist, examiner, str_length);			// Copy artist
-	album->artist[str_length] = '\0';						// Provide a terminator
-	strncpy(album->album_artist, examiner, str_length);		// Copy album artist
-	album->album_artist[str_length] = '\0';					// Provide a terminator
+		examiner = strstr(examiner, "|");						// Seek to start of album artist
+		examiner += 2;											// Ignore 2 characters of "| "
+		str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
+		strncpy(album->artist, examiner, str_length);			// Copy artist
+		album->artist[str_length] = '\0';						// Provide a terminator
+		strncpy(album->album_artist, examiner, str_length);		// Copy album artist
+		album->album_artist[str_length] = '\0';					// Provide a terminator
+	}
+	else {
+		album->song_count = 1;
+
+		album->song_titles = (char**)malloc(album->song_count * sizeof(char*));
+		mallocChecker(album->song_titles);
+		album->song_titles[0] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
+		mallocChecker(album->song_titles[0]);
+
+		examiner += strlen("<title>");							// Seek to start of album title (<title>example -> example)
+		str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example</title> -> measure until before |)
+		str_length -= 1;										// String contains " ", -1 to truncate
+		strncpy(album->song_titles[0], examiner, str_length);	// Copy track name
+		album->song_titles[0][str_length] = '\0';				// Provide a terminator
+
+		examiner = strstr(examiner, "|");						// Seek to start of album artist
+		examiner += 2;											// Ignore 2 characters of "| "
+		str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
+		strncpy(album->artist, examiner, str_length);			// Copy artist
+		album->artist[str_length] = '\0';						// Provide a terminator
+	}
 
 	free(line);
 
@@ -527,23 +595,38 @@ u_int get_song_links(FILE* fp, album_details* album) {
 
 void fix_up_fields(album_details* album) {
 	char* to_strip = "amp;";
-	// Strip amp;
-	str_replace(album->album, to_strip, "");
-	str_replace(album->album_artist, to_strip, "");
-	str_replace(album->artist, to_strip, "");
-	for (int i = 0; i < album->song_count; i++) {
-		str_replace(album->song_titles[i], to_strip, "");
-		str_replace(album->file_names[i], to_strip, "");
+
+	if (!strcmp(album->operation_type, "album")) {
+		// Strip amp;
+		str_replace(album->album, to_strip, "");
+		str_replace(album->album_artist, to_strip, "");
+		str_replace(album->artist, to_strip, "");
+		for (int i = 0; i < album->song_count; i++) {
+			str_replace(album->song_titles[i], to_strip, "");
+			str_replace(album->file_names[i], to_strip, "");
+		}
+
+		// Convert ASCII codes to symbols
+		ascii_convert(album->album, 0);
+		ascii_convert(album->album_artist, 0);
+		ascii_convert(album->artist, 0);
+		for (int i = 0; i < album->song_count; i++) {
+			ascii_convert(album->song_titles[i], 0);
+			ascii_convert(album->file_names[i], 1);
+		}
+	}
+	else {
+		// Strip amp;
+		str_replace(album->artist, to_strip, "");
+		str_replace(album->song_titles[0], to_strip, "");
+		str_replace(album->file_names[0], to_strip, "");
+
+		// Convert ASCII codes to symbols
+		ascii_convert(album->artist, 0);
+		ascii_convert(album->song_titles[0], 0);
+		ascii_convert(album->file_names[0], 1);
 	}
 
-	// Convert ASCII codes to symbols
-	ascii_convert(album->album, 0);
-	ascii_convert(album->album_artist, 0);
-	ascii_convert(album->artist, 0);
-	for (int i = 0; i < album->song_count; i++) {
-		ascii_convert(album->song_titles[i], 0);
-		ascii_convert(album->file_names[i], 1);
-	}
 }
 
 void str_replace(char* target, const char* needle, const char* replacement)
@@ -620,17 +703,111 @@ void ascii_convert(char* target, int is_file_name) {
 
 	// These characters cannot be present in filenames in Windows
 	if (is_file_name) {
-		str_replace(buffer, "\\", "");
-		str_replace(buffer, "/", "");
-		str_replace(buffer, ":", "");
-		str_replace(buffer, "*", "");
-		str_replace(buffer, "?", "");
-		str_replace(buffer, "\"", "");
-		str_replace(buffer, "<", "");
-		str_replace(buffer, ">", "");
-		str_replace(buffer, "|", "");
+		str_replace(buffer, "\\", "I");
+		str_replace(buffer, "/", "I");
+		str_replace(buffer, ":", ";");
+		str_replace(buffer, "*", "x");
+		str_replace(buffer, "?", "¿");
+		str_replace(buffer, "\"", "I");
+		str_replace(buffer, "<", "(");
+		str_replace(buffer, ">", ")");
+		str_replace(buffer, "|", "I");
 	}
 
 	// write altered string back to target
 	strcpy(target, buffer);
+}
+
+// Reads a provided artist link to get all published work links
+link_struct* get_everything(char* website_link) {
+	link_struct* all_links = (link_struct*)malloc(sizeof(link_struct));
+	mallocChecker(all_links);
+	*all_links = (link_struct){.link_count = 0, .malloc_count = 4};
+	all_links->links = (char**)malloc(all_links->malloc_count * sizeof(char*));
+	mallocChecker(all_links->links);
+	for (int i = 0; i < all_links->malloc_count; i++)
+	{
+		all_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
+		mallocChecker(all_links->links[i]);
+	}
+
+	FILE* fp = fopen(WEBPAGE_DUMP, "r");
+
+	char chunk[UNIVERSAL_LENGTH];
+	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
+	char* line = malloc(len);
+	mallocChecker(line);
+	line[0] = '\0';					// Zeroise the string
+	char* examiner = NULL;
+
+	size_t str_length = 0;
+	while (fgets(chunk, sizeof(chunk), fp) != NULL) {
+		// Resize the line buffer if necessary, x2 each time
+		size_t len_used = strlen(line);
+		size_t chunk_used = strlen(chunk);
+
+		if (len - len_used < chunk_used) {
+			len *= 2;
+			line = realloc(line, len);
+			mallocChecker(line);
+		}
+
+		// Copy the chunk to the end of the line buffer
+		strncpy(line + len_used, chunk, len - len_used);
+		len_used += chunk_used;
+
+		// Check if line contains '\n', if yes process the line of text
+		if (line[len_used - 1] == '\n') {
+			examiner = strstr(line, "/track/");
+
+			if (examiner) {
+
+				strcpy(all_links->links[all_links->link_count], website_link);
+				str_length = (int)(strstr(examiner, "\"") - examiner);
+				strncat(all_links->links[all_links->link_count], examiner, str_length);
+
+				(all_links->link_count)++;
+			}
+
+			examiner = strstr(line, "/album/");
+
+			if (examiner) {
+
+				strcpy(all_links->links[all_links->link_count], website_link);
+				str_length = (int)(strstr(examiner, "\"") - examiner);
+				strncat(all_links->links[all_links->link_count], examiner, str_length);
+
+				(all_links->link_count)++;
+			}
+
+			// "Empty" the line buffer
+			line[0] = '\0';
+		}
+
+		// Link count is always -1 of malloc count (1st +1), if the next insertion is overrunning (2nd +1) expand 
+		if (all_links->link_count + 1 + 1 > all_links->malloc_count) {
+			all_links->links = realloc(all_links->links, sizeof(char*) * (2 * all_links->malloc_count));
+			mallocChecker(all_links->links);
+			for (int i = all_links->malloc_count; i < 2 * all_links->malloc_count; i++)
+			{
+				all_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
+				mallocChecker(all_links->links[i]);
+			}
+
+			all_links->malloc_count *= 2;
+		}
+	}
+
+	// If artist does not exist, Bandcamp returns a small page containing:
+	// "You are being redirected, please follow <a href="https://bandcamp.com/signup?new_domain=[domain]">this link to: https://bandcamp.com/signup?new_domain=[domain]</a>!	0"
+	// This will result in no songs found, meaning invalid artist
+	if (!all_links->link_count) {
+		fprintf(stderr, "[!] Invalid Bandcamp Artist Link!\n");
+		return NULL;
+	}
+
+	free(line);
+	fclose(fp);
+
+	return all_links;
 }

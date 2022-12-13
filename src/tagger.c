@@ -24,14 +24,24 @@ void tagging(album_details* album, int* fail_code) {
 			return;
 		}
 		else {
-			write_tags(album, create_file, "ID3", i);
-			write_tags(album, create_file, "TIT2", i);
-			write_tags(album, create_file, "TPE1", i);
-			write_tags(album, create_file, "TPE2", i);
-			write_tags(album, create_file, "TALB", i);
-			write_tags(album, create_file, "TYER", i);
-			write_tags(album, create_file, "TRCK", i);
-			write_tags(album, create_file, "APIC", i);
+			if (!strcmp(album->operation_type, "album")) {
+				write_tags(album, create_file, "ID3", i);
+				write_tags(album, create_file, "TIT2", i);
+				write_tags(album, create_file, "TPE1", i);
+				write_tags(album, create_file, "TPE2", i);
+				write_tags(album, create_file, "TALB", i);
+				write_tags(album, create_file, "TYER", i);
+				write_tags(album, create_file, "TRCK", i);
+				write_tags(album, create_file, "APIC", i);
+			}
+			else {
+				write_tags(album, create_file, "ID3", i);
+				write_tags(album, create_file, "TIT2", i);
+				write_tags(album, create_file, "TPE1", i);
+				write_tags(album, create_file, "TYER", i);
+				write_tags(album, create_file, "APIC", i);
+			}
+
 
 			fclose(create_file);
 		}
@@ -40,8 +50,25 @@ void tagging(album_details* album, int* fail_code) {
 
 int compute_total_size(album_details* album, int song_no) {
 	int frame_header_size = 11;	// 4 bytes Frame ID, 4 bytes Size, 2 bytes Flags, 1 byte Text encoding
-	int number_frames = 7, total_size = 0;
+	int number_frames = 0, total_size = 0;
 	char track_no_buffer[8] = { 0 };
+
+	if (!strcmp(album->operation_type, "album")) {
+		number_frames = 7;
+
+		// Album Artist
+		total_size += strlen(album->album_artist);
+
+		// Album
+		total_size += strlen(album->album);
+
+		// Track Number
+		sprintf(track_no_buffer, "%d", song_no + 1);
+		total_size += strlen(track_no_buffer);
+	}
+	else {
+		number_frames = 4;
+	}
 
 	// All headers sizes summed
 	total_size += frame_header_size * number_frames;
@@ -50,20 +77,10 @@ int compute_total_size(album_details* album, int song_no) {
 	total_size += strlen(album->song_titles[song_no]);
 
 	// Artist
-	total_size += strlen(album->album_artist);
-
-	// Album Artist
-	total_size += strlen(album->album_artist);
-
-	// Album
-	total_size += strlen(album->album);
+	total_size += strlen(album->artist);
 
 	// Year
 	total_size += strlen(album->year);
-
-	// Track Number
-	sprintf(track_no_buffer, "%d", song_no + 1);
-	total_size += strlen(track_no_buffer);
 
 	// Image
 	total_size += strlen(MIME_TYPE) + 1;
@@ -121,7 +138,7 @@ void write_tags(album_details* album, FILE* create_file, const char* chosen_tag,
 				size = strlen(album->song_titles[song_no]);
 				break;
 			case 1:
-				size = strlen(album->album_artist);
+				size = strlen(album->artist);
 				break;
 			case 2:
 				size = strlen(album->album_artist);
@@ -148,7 +165,7 @@ void write_tags(album_details* album, FILE* create_file, const char* chosen_tag,
 				fprintf(create_file, "%s", album->song_titles[song_no]);
 				break;
 			case 1:
-				fprintf(create_file, "%s", album->album_artist);
+				fprintf(create_file, "%s", album->artist);
 				break;
 			case 2:
 				fprintf(create_file, "%s", album->album_artist);

@@ -23,6 +23,7 @@ int get_webpage(char* webpage_link) {
 		fclose(initial_file);
 	}
 
+	fprintf(stdout, DIVIDER_50);
 	fprintf(stdout, "[i] Downloading webpage from <%s>\n", webpage_link);
 
 	int bytes_downloaded = 0;
@@ -142,7 +143,13 @@ int get_songs(album_details* album) {
 		return 1;
 	}
 
-	fprintf(stdout, "[i] Downloading %s by %s (%d songs)\n", album->album, album->artist, album->song_count);
+	if (!strcmp(album->operation_type, "album")) {
+		fprintf(stdout, "[i] Downloading album %s by %s (%d songs)\n", album->album, album->artist, album->song_count);
+	}
+	else {
+		fprintf(stdout, "[i] Downloading track %s by %s\n", album->song_titles[0], album->artist);
+	}
+	fprintf(stdout, DIVIDER_25);
 
 	CURLMsg* msg;
 	unsigned int transfers = 0;
@@ -215,7 +222,14 @@ size_t song_write(char* buffer, int itemsize, int n_items, void* userp)
 
 	FILE* open_file;
 
-	open_file = fopen(song_title, "ab");
+	// On occasion songs will have their own ID3 data, override existing written data in this scenario
+	if (buffer[0] == 'I' && buffer[1] == 'D' && buffer[2] == '3') {
+		open_file = fopen(song_title, "wb");
+	}
+	else {
+		open_file = fopen(song_title, "ab");
+	}
+
 	if (open_file == NULL) {
 		fprintf(stderr, "[!] Could not open %s.\n", song_title);
 		return -1;

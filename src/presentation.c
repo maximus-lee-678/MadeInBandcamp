@@ -11,6 +11,7 @@ u_int welcome() {
 	srand(time(NULL));
 	int random = rand() % 4;
 
+	fprintf(stdout, DIVIDER_50);
 	fprintf(stdout, "[~] %s\n", openers[random]);
 
 	char pwd[FILENAME_MAX];
@@ -20,22 +21,30 @@ u_int welcome() {
 		return 1;
 	}
 	else {
-		fprintf(stdout, "[~] Enter a Bandcamp album link (*** to finish)\n");
+		fprintf(stdout, "[~] Accepted Inputs:\n");
+		fprintf(stdout, "[~] Album link (https://<?>.bandcamp.com/album/<?>)\n");
+		fprintf(stdout, "[~] Track link (https://<?>.bandcamp.com/track/<?>)\n");
+		fprintf(stdout, "[~] Composer link (https://<?>.bandcamp.com)\n");
+		fprintf(stdout, "[~] Enter \"%s\" to begin downloads\n", EXIT_STRING);
+		fprintf(stdout, DIVIDER_50);
+		fprintf(stdout, "[i] Accepting Inputs\n");
 		return 0;
 	}
 }
 
-char** receive_links(int* number_websites) {
-	u_int arr_size = 4;
-	char buffer[UNIVERSAL_LENGTH];				// buffer to hold strings
-
-	char** website_links = (char**)malloc(arr_size * sizeof(char*));
-	mallocChecker(website_links);
-	for (int i = 0; i < arr_size; i++)
+link_struct* receive_links() {
+	link_struct* entered_links = (link_struct*)malloc(sizeof(link_struct));
+	mallocChecker(entered_links);
+	*entered_links = (link_struct){ .link_count = 0, .malloc_count = 4 };
+	entered_links->links = (char**)malloc(entered_links->malloc_count * sizeof(char*));
+	mallocChecker(entered_links->links);
+	for (int i = 0; i < entered_links->malloc_count; i++)
 	{
-		website_links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(website_links[i]);
+		entered_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
+		mallocChecker(entered_links->links[i]);
 	}
+
+	char buffer[UNIVERSAL_LENGTH];				// buffer to hold strings
 
 	while (1) {
 		fprintf(stdout, "[<] ");
@@ -50,8 +59,8 @@ char** receive_links(int* number_websites) {
 			scanf("%*c");		// clear newline
 		}
 
-		// break if "***"
-		if (strcmp(buffer, "***") == 0)
+		// break if matches exit string
+		if (strcmp(buffer, EXIT_STRING) == 0)
 			break;
 
 		// invalid link
@@ -60,26 +69,32 @@ char** receive_links(int* number_websites) {
 			continue;
 		}
 
-		// array no space, double it
-		if (*number_websites + 1 > arr_size) {
-			website_links = realloc(website_links, sizeof(char*) * (2 * arr_size));
-			mallocChecker(website_links);
-			for (int i = arr_size; i < 2 * arr_size; i++)
-			{
-				website_links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-				mallocChecker(website_links[i]);
-			}
-
-			arr_size *= 2;
+		// strip any trailing slash
+		if (buffer[strlen(buffer) - 1] == '/') {
+			buffer[strlen(buffer) - 1] = '\0';
 		}
 
-		strcpy(website_links[(*number_websites)++], buffer);
+		// array no space, double it
+		if (entered_links->link_count + 1 > entered_links->malloc_count) {
+			entered_links->links = realloc(entered_links->links, sizeof(char*) * (2 * entered_links->malloc_count));
+			mallocChecker(entered_links->links);
+			for (int i = entered_links->malloc_count; i < 2 * entered_links->malloc_count; i++)
+			{
+				entered_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
+				mallocChecker(entered_links->links[i]);
+			}
+
+			entered_links->malloc_count *= 2;
+		}
+
+		strcpy(entered_links->links[(entered_links->link_count)++], buffer);
 	}
 
-	return website_links;
+	return entered_links;
 }
 
 void goodbye() {
+	fprintf(stdout, DIVIDER_50);
 	fprintf(stdout, "[~] Press any key to close this window . . .");
 	_getch();
 }

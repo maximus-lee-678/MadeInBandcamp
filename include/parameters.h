@@ -8,6 +8,9 @@
 #include <conio.h>
 #include <errno.h>
 
+#define DIVIDER_25 "=========================\n"
+#define DIVIDER_50 "==================================================\n"
+
 #define WEBPAGE_DUMP "./temp/webpage.txt"
 #define IMAGE_DUMP "./temp/cover.jpg"
 #define TEMP_DIRECTORY "./temp/"
@@ -17,6 +20,7 @@
 #define UNIVERSAL_LENGTH 512
 
 typedef struct {
+	char operation_type[6];
 	char artist[UNIVERSAL_LENGTH];
 	char album_artist[UNIVERSAL_LENGTH];
 	char album[UNIVERSAL_LENGTH];
@@ -27,5 +31,11 @@ typedef struct {
 	char** song_links;
 	char** file_names;
 }album_details;
+
+typedef struct {
+	int link_count;
+	int malloc_count;
+	char** links;
+}link_struct;
 
 void mallocChecker(void*);
