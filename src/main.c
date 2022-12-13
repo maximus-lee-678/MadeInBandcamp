@@ -10,7 +10,6 @@ u_int everything_operation(char*);
 
 int main(void)
 {
-
 	if (welcome()) {
 		fprintf(stderr, "[x] Terminated due to Desktop detection\n");
 		goodbye();
@@ -233,6 +232,26 @@ u_int everything_operation(char* website_link) {
 		fprintf(stderr, "[x] Download failed: Code %d\n", fail_code);
 		return fail_code;
 	}
+
+	// Check if page lists all music
+	if (!is_webpage_everything()) {
+		fprintf(stdout, "[i] <%s> is not the main page, redirecting!\n", website_link);
+
+		char extended_website_link[UNIVERSAL_LENGTH];
+		strcpy(extended_website_link, website_link);
+		strcat(extended_website_link, "/music");
+
+		fail_code = get_webpage(extended_website_link);
+		if (fail_code) {
+			fail_code += 100;
+			fprintf(stderr, "[x] Download failed: Code %d\n", fail_code);
+			return fail_code;
+		}
+	}
+
+	// Remove [/music] to assist appending operations
+	str_replace(website_link, "/music", "");
+
 	link_struct* all_links = get_everything(website_link);
 	if (all_links == NULL) {
 		fail_code += 600;

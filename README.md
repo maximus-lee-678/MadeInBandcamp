@@ -9,9 +9,10 @@ Accepted Inputs:
 Album link (https://[?].bandcamp.com/album/[?])\
 Track link (https://[?].bandcamp.com/track/[?])\
 Composer link (https://[?].bandcamp.com)\
+Composer link (https://[?].bandcamp.com/music)\
 Enter "***" to begin downloads\
 You may specify any number of albums, this program will download the albums one by one\
-Songs are located in the songs folder, try not to touch the songs during download\
+Songs are located in the songs folder, try not to touch the songs during download
 
 __This application will not work on the "Desktop" directory!__
   

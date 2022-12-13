@@ -25,6 +25,7 @@ u_int welcome() {
 		fprintf(stdout, "[~] Album link (https://<?>.bandcamp.com/album/<?>)\n");
 		fprintf(stdout, "[~] Track link (https://<?>.bandcamp.com/track/<?>)\n");
 		fprintf(stdout, "[~] Composer link (https://<?>.bandcamp.com)\n");
+		fprintf(stdout, "[~] Composer link (https://<?>.bandcamp.com/music)\n");
 		fprintf(stdout, "[~] Enter \"%s\" to begin downloads\n", EXIT_STRING);
 		fprintf(stdout, DIVIDER_50);
 		fprintf(stdout, "[i] Accepting Inputs\n");

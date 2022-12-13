@@ -593,6 +593,7 @@ u_int get_song_links(FILE* fp, album_details* album) {
 	return 0;
 }
 
+// Removes strange formatting, converts numbers to ASCII, sanitises file names.
 void fix_up_fields(album_details* album) {
 	char* to_strip = "amp;";
 
@@ -629,93 +630,56 @@ void fix_up_fields(album_details* album) {
 
 }
 
-void str_replace(char* target, const char* needle, const char* replacement)
-{
-	char buffer[UNIVERSAL_LENGTH] = { 0 };
-	char* insert_point = &buffer[0];
-	const char* tmp = target;
-	size_t needle_len = strlen(needle);
-	size_t repl_len = strlen(replacement);
+// Sometimes, main pages have an album on them instead of all music.
+// This can be determined by looking for [<title>Music |], if this field exists, the page is correct.
+// If not, need to go to <link>/music .
+u_int is_webpage_everything() {
+	FILE* fp = fopen(WEBPAGE_DUMP, "r");
 
-	while (1) {
-		const char* p = strstr(tmp, needle);
+	char chunk[UNIVERSAL_LENGTH];
+	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
+	char* line = malloc(len);
+	mallocChecker(line);
+	line[0] = '\0';					// Zeroise the string
+	char* examiner = NULL;
+	int flag = 0;
 
-		// walked past last occurrence of needle; copy remaining part
-		if (p == NULL) {
-			strcpy(insert_point, tmp);
-			break;
+	while (fgets(chunk, sizeof(chunk), fp) != NULL) {
+		// Resize the line buffer if necessary, x2 each time
+		size_t len_used = strlen(line);
+		size_t chunk_used = strlen(chunk);
+
+		if (len - len_used < chunk_used) {
+			len *= 2;
+			line = realloc(line, len);
+			mallocChecker(line);
 		}
 
-		// copy part before needle
-		memcpy(insert_point, tmp, p - tmp);
-		insert_point += p - tmp;
+		// Copy the chunk to the end of the line buffer
+		strncpy(line + len_used, chunk, len - len_used);
+		len_used += chunk_used;
 
-		// copy replacement string
-		memcpy(insert_point, replacement, repl_len);
-		insert_point += repl_len;
+		// Check if line contains '\n', if yes process the line of text
+		if (line[len_used - 1] == '\n') {
+			examiner = strstr(line, "<title>Music |");
 
-		// adjust pointers, move on
-		tmp = p + needle_len;
-	}
+			if (examiner) {
+				flag = 1;
+				break;
+			}
 
-	// write altered string back to target
-	strcpy(target, buffer);
-}
-
-void ascii_convert(char* target, int is_file_name) {
-	char buffer[UNIVERSAL_LENGTH] = { 0 };
-	char* insert_point = &buffer[0];
-	char* tmp = target;
-	int ascii_length = 0;
-	char temp_buffer[8] = { 0 };
-	char ascii_value;
-
-	while (1) {
-		char* examiner = strstr(tmp, "&#");
-
-		// walked past last occurrence of needle; copy remaining part
-		if (examiner == NULL) {
-			strcpy(insert_point, tmp);
-			break;
+			// "Empty" the line buffer
+			line[0] = '\0';
 		}
-
-		// copy part before needle
-		memcpy(insert_point, tmp, examiner - tmp);
-		insert_point += examiner - tmp;
-
-		// measure length of &# string, total length of &# (needs +1 as strstr seeks to 1 before the end) - start of string
-		ascii_length = (int)(strstr(examiner, ";") + 1 - examiner);
-
-		// convert ascii to character
-		strncpy(temp_buffer, examiner + strlen("&#"), ascii_length - strlen("&#;"));
-		ascii_value = (char)strtol(temp_buffer, NULL, 10);
-
-		snprintf(temp_buffer, 2, "%c", ascii_value);
-
-		// copy replacement string, 1 character long
-		memcpy(insert_point, temp_buffer, 1);
-		insert_point += 1;
-
-
-		// adjust pointers, move on
-		tmp = examiner + ascii_length;
 	}
 
-	// These characters cannot be present in filenames in Windows
-	if (is_file_name) {
-		str_replace(buffer, "\\", "I");
-		str_replace(buffer, "/", "I");
-		str_replace(buffer, ":", ";");
-		str_replace(buffer, "*", "x");
-		str_replace(buffer, "?", "¿");
-		str_replace(buffer, "\"", "I");
-		str_replace(buffer, "<", "(");
-		str_replace(buffer, ">", ")");
-		str_replace(buffer, "|", "I");
+	if (flag) {
+		return 1;
 	}
 
-	// write altered string back to target
-	strcpy(target, buffer);
+	free(line);
+
+	return 0;
 }
 
 // Reads a provided artist link to get all published work links
@@ -810,4 +774,62 @@ link_struct* get_everything(char* website_link) {
 	fclose(fp);
 
 	return all_links;
+}
+
+// Special characters are sometimes converted to &#<number>;, convert these to ASCII.
+// Also swaps out illegal characters for windows filenames.
+void ascii_convert(char* target, int is_file_name) {
+	char buffer[UNIVERSAL_LENGTH] = { 0 };
+	char* insert_point = &buffer[0];
+	char* tmp = target;
+	int ascii_length = 0;
+	char temp_buffer[8] = { 0 };
+	char ascii_value;
+
+	while (1) {
+		char* examiner = strstr(tmp, "&#");
+
+		// walked past last occurrence of needle; copy remaining part
+		if (examiner == NULL) {
+			strcpy(insert_point, tmp);
+			break;
+		}
+
+		// copy part before needle
+		memcpy(insert_point, tmp, examiner - tmp);
+		insert_point += examiner - tmp;
+
+		// measure length of &# string, total length of &# (needs +1 as strstr seeks to 1 before the end) - start of string
+		ascii_length = (int)(strstr(examiner, ";") + 1 - examiner);
+
+		// convert ascii to character
+		strncpy(temp_buffer, examiner + strlen("&#"), ascii_length - strlen("&#;"));
+		ascii_value = (char)strtol(temp_buffer, NULL, 10);
+
+		snprintf(temp_buffer, 2, "%c", ascii_value);
+
+		// copy replacement string, 1 character long
+		memcpy(insert_point, temp_buffer, 1);
+		insert_point += 1;
+
+
+		// adjust pointers, move on
+		tmp = examiner + ascii_length;
+	}
+
+	// These characters cannot be present in filenames in Windows
+	if (is_file_name) {
+		str_replace(buffer, "\\", "I");
+		str_replace(buffer, "/", "I");
+		str_replace(buffer, ":", ";");
+		str_replace(buffer, "*", "x");
+		str_replace(buffer, "?", "¿");
+		str_replace(buffer, "\"", "I");
+		str_replace(buffer, "<", "(");
+		str_replace(buffer, ">", ")");
+		str_replace(buffer, "|", "I");
+	}
+
+	// write altered string back to target
+	strcpy(target, buffer);
 }

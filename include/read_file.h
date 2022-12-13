@@ -11,7 +11,7 @@ u_int get_album_art_link(FILE*, album_details*);
 u_int get_number_songs(FILE*, album_details*);
 u_int get_song_titles(FILE*, album_details*);
 u_int get_song_links(FILE*, album_details*);
+u_int is_webpage_everything();
 link_struct* get_everything(char*);
 void fix_up_fields(album_details*);
-void str_replace(char*, const char*, const char*);
 void ascii_convert(char*, int);
