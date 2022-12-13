@@ -1,5 +1,5 @@
 
-# MadeInBandcamp ![alt text](https://github.com/maximus-lee-678/MadeInBandcamp/blob/main/assets/madeinbandcamp.jpg) 
+# MadeInBandcamp <img src="https://github.com/maximus-lee-678/MadeInBandcamp/blob/main/assets/madeinbandcamp.jpg" width="32"/>
 Windows utility to download 128kbps tracks from Bandcamp\
 Performs automatic ID3 tagging on downloaded songs\
 Can download tracks, albums, and entire account publishings
