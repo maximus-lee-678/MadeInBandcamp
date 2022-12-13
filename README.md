@@ -15,6 +15,7 @@ You may specify any number of albums, this program will download the albums one 
 Songs are located in the songs folder, try not to touch the songs during download
 
 __This application will not work on the "Desktop" directory!__
+__This application does not support UTF-8! (maybe someday)__
   
 # Is that Legal?
 https://get.bandcamp.help/hc/en-us/articles/360007902173-I-heard-you-can-steal-music-on-Bandcamp-What-are-you-doing-about-this

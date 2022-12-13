@@ -42,7 +42,6 @@ void tagging(album_details* album, int* fail_code) {
 				write_tags(album, create_file, "APIC", i);
 			}
 
-
 			fclose(create_file);
 		}
 	}

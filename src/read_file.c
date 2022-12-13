@@ -673,11 +673,12 @@ u_int is_webpage_everything() {
 		}
 	}
 
+	free(line);
+	fclose(fp);
+
 	if (flag) {
 		return 1;
 	}
-
-	free(line);
 
 	return 0;
 }
