@@ -1,5 +1,9 @@
 #include "../include/curl_operations.h"
 
+// https://curl.se/libcurl/c/getinmemory.html
+// https://curl.se/libcurl/c/libcurl-multi.html
+// https://curl.se/libcurl/c/10-at-a-time.html
+
 int get_webpage(char* webpage_link) {
 	CURL* curl = curl_easy_init();
 

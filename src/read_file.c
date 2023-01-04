@@ -310,11 +310,18 @@ u_int get_year(FILE* fp, album_details* album) {
 	examiner++;
 	examiner = strstr(examiner, " ");				// Skip 3 spaces to get to year
 	examiner++;
-	examiner = strstr(examiner, " ");				// Skip 3 spaces to get to year
-	examiner++;
-	examiner = strstr(examiner, " ");				// Skip 3 spaces to get to year
-	examiner++;
-	strncpy(album->year, examiner, 4);		// Copy year (4 long)
+	if (examiner[0] == '\n') {						// Checks for existence of release year
+		fprintf(stdout, "[i] No Album Release Year found in page, defaulting to NA!\n");
+		strncpy(album->year, "-NA-", 4);		// No year found, specify NA
+	}
+	else {
+		examiner = strstr(examiner, " ");				// Skip 3 spaces to get to year
+		examiner++;
+		examiner = strstr(examiner, " ");				// Skip 3 spaces to get to year
+		examiner++;
+		strncpy(album->year, examiner, 4);		// Copy year (4 long)
+	}
+
 	album->year[4] = '\0';				// Provide a terminator
 
 	free(line);
@@ -380,7 +387,7 @@ u_int get_album_art_link(FILE* fp, album_details* album) {
 }
 
 // 5. Count number of songs
-// When a line with "1." is found, check the following lines for the numbering pattern until unable to
+// Count number of occurrences of [https://t4.bcbits.com]
 u_int get_number_songs(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
@@ -391,7 +398,6 @@ u_int get_number_songs(FILE* fp, album_details* album) {
 	int flag = 0;
 
 	size_t song_count = 0;
-	char song_no[8] = "1.";
 
 	while (fgets(chunk, sizeof(chunk), fp) != NULL) {
 		// Resize the line buffer if necessary, x2 each time
@@ -410,15 +416,11 @@ u_int get_number_songs(FILE* fp, album_details* album) {
 
 		// Check if line contains '\n', if yes process the line of text
 		if (line[len_used - 1] == '\n') {
-			examiner = strstr(line, song_no);
+			// Search for indicator that line contains song links
+			examiner = strstr(line, "data-site");
 
+			// Line found, move to processing
 			if (examiner) {
-				song_count++;
-				sprintf(song_no, "%d.", song_count + 1);
-			}
-			else if (song_count != 0) {
-				// "Empty" the line buffer
-				line[0] = '\0';
 				flag = 1;
 				break;
 			}
@@ -432,6 +434,17 @@ u_int get_number_songs(FILE* fp, album_details* album) {
 		fprintf(stderr, "[!] Could Not Locate Any Songs!\n");
 		free(album);
 		return 5;
+	}
+
+	while (1) {
+		examiner = strstr(examiner, "https://t4.bcbits.com");			// Seek to start of a link
+		if (examiner) {
+			song_count++;
+			examiner++;
+		}
+		else {
+			break;
+		}
 	}
 
 	album->song_count = song_count;
@@ -483,7 +496,7 @@ u_int get_song_titles(FILE* fp, album_details* album) {
 			examiner = strstr(line, song_no);
 
 			// Track number found
-			if (examiner) {
+			if (examiner && song_counter < album->song_count) {
 				examiner = strstr(examiner, " ");									// Locate spacing, move to 1 after
 				examiner++;
 				str_length = (int)(strstr(examiner, "\n") - examiner);
@@ -548,7 +561,7 @@ u_int get_song_links(FILE* fp, album_details* album) {
 		// Check if line contains '\n', if yes process the line of text
 		if (line[len_used - 1] == '\n') {
 			// Search for indicator that line contains song links
-			examiner = strstr(line, "data-cart");
+			examiner = strstr(line, "data-site");
 
 			// Line found, move to processing
 			if (examiner) {
@@ -582,6 +595,17 @@ u_int get_song_links(FILE* fp, album_details* album) {
 		mallocChecker(album->song_links[i]);
 
 		examiner = strstr(examiner, "https://t4.bcbits.com");			// Seek to start of a link
+		if (!examiner) {												// If NULL is returned, it usually means a single track's link could not be found.
+			fprintf(stderr, "[!] Single track is paywalled!\n");
+			for (int i = 0; i < album->song_count; i++)
+			{
+				free(album->song_titles[i]);
+			}
+			free(album->song_titles);
+			free(album);
+			return 8;															// This occurs naturally if the song is paywalled.
+		}
+
 		str_length = (int)(strstr(examiner, ";}") - examiner);		// Measure length of link
 		strncpy(album->song_links[i], examiner, str_length);	// Copy link
 		album->song_links[i][str_length] = '\0';			// Provide a terminator
@@ -676,18 +700,14 @@ u_int is_webpage_everything() {
 	free(line);
 	fclose(fp);
 
-	if (flag) {
-		return 1;
-	}
-
-	return 0;
+	return flag;
 }
 
 // Reads a provided artist link to get all published work links
 link_struct* get_everything(char* website_link) {
 	link_struct* all_links = (link_struct*)malloc(sizeof(link_struct));
 	mallocChecker(all_links);
-	*all_links = (link_struct){.link_count = 0, .malloc_count = 4};
+	*all_links = (link_struct){ .link_count = 0, .malloc_count = 4 };
 	all_links->links = (char**)malloc(all_links->malloc_count * sizeof(char*));
 	mallocChecker(all_links->links);
 	for (int i = 0; i < all_links->malloc_count; i++)

@@ -1,5 +1,8 @@
 #include "../include/tagger.h"
 
+// https://id3.org/id3v2.3.0
+// https://en.wikipedia.org/wiki/ID3
+
 static int image_size = 0;
 
 void tagging(album_details* album, int* fail_code) {
