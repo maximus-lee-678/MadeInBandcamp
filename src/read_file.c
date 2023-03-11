@@ -211,19 +211,25 @@ u_int get_title_fields(FILE* fp, album_details* album) {
 
 	size_t str_length = 0;
 	if (!strcmp(album->operation_type, "album")) {
-		examiner += strlen("<title>");							// Seek to start of album title (<title>example -> example)
-		str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example</title> -> measure until before |)
-		str_length -= 1;										// String contains " ", -1 to truncate
-		strncpy(album->album, examiner, str_length);			// Copy artist
-		album->album[str_length] = '\0';						// Provide a terminator
+		examiner += strlen("<title>");								// Seek to start of album title (<title>example -> example)
+		str_length = (int)(strstr(examiner, "|") - examiner);		// Measure length (example</title> -> measure until before |)
+		str_length -= 1;											// String contains " ", -1 to truncate
+		strncpy(album->album, examiner, str_length);				// Copy album name
+		album->album[str_length] = '\0';							// Provide a terminator
 
-		examiner = strstr(examiner, "|");						// Seek to start of album artist
-		examiner += 2;											// Ignore 2 characters of "| "
-		str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
-		strncpy(album->artist, examiner, str_length);			// Copy artist
-		album->artist[str_length] = '\0';						// Provide a terminator
-		strncpy(album->album_artist, examiner, str_length);		// Copy album artist
-		album->album_artist[str_length] = '\0';					// Provide a terminator
+		examiner = strstr(examiner, "|");							// Seek to start of album artist
+		examiner += 2;												// Ignore 2 characters of "| "
+		if (strstr(examiner, "|") != NULL) {
+			str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example | unwanted title -> measure until before |)
+			str_length -= 1;										// String contains " ", -1 to truncate
+		}
+		else {
+			str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
+		}
+		strncpy(album->artist, examiner, str_length);				// Copy artist
+		album->artist[str_length] = '\0';							// Provide a terminator
+		strncpy(album->album_artist, examiner, str_length);			// Copy album artist
+		album->album_artist[str_length] = '\0';						// Provide a terminator
 	}
 	else {
 		album->song_count = 1;
