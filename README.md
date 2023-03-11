@@ -1,5 +1,5 @@
 
-# MadeInBandcamp <img src="https://github.com/maximus-lee-678/MadeInBandcamp/blob/main/assets/madeinbandcamp.jpg" width="32"/>
+# MadeInBandcamp <img src="https://github.com/maximus-lee-678/MadeInBandcamp/blob/main/MadeInBandcamp/assets/madeinbandcamp.jpg" width="32"/>
 Windows utility to download 128kbps tracks from Bandcamp\
 Performs automatic ID3 tagging on downloaded songs\
 Can download tracks, albums, and entire account publishings
@@ -22,4 +22,5 @@ https://get.bandcamp.help/hc/en-us/articles/360007902173-I-heard-you-can-steal-m
 
 If you like the music, support the artist!
   
-###### Developed in VS2019 with libcurl for Windows
+###### Developed in VS2022 with libcurl for Windows
+###### libcurl installed using vcpkg: https://github.com/microsoft/vcpkg
