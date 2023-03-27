@@ -11,7 +11,7 @@ u_int everything_operation(char*);
 int main(void)
 {
 	if (welcome()) {
-		fprintf(stderr, "[x] Terminated due to Desktop detection\n");
+		fprintf(stderr, "[x] Terminated due to Desktop detection!\n");
 		goodbye();
 		return -2;
 	}
