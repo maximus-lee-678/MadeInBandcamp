@@ -43,7 +43,8 @@
 🚓 Roadmap
 -----------
 
-Currently does not properly support songs with UTF-8 encoding, retrieves the song but does not load song name or metadata properly.
+* Currently does not properly support songs with UTF-8 encoding, retrieves the song but does not load song name or metadata properly.
+* Update to new CLI display method.
 
 🖥️ VS2022 Setup
 ---------------
