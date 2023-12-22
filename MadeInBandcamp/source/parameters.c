@@ -2,7 +2,7 @@
 #include "../include/presentation.h"
 
 // ensure malloc success, eliminate catastrophic failure.
-void mallocChecker(void* ptr)
+void malloc_checker(void* ptr)
 {
 	if (ptr == NULL)
 	{

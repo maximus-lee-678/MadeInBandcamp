@@ -38,5 +38,5 @@ typedef struct {
 	char** links;
 }link_struct;
 
-void mallocChecker(void*);
+void malloc_checker(void*);
 void str_replace(char*, const char*, const char*);

@@ -35,14 +35,14 @@ u_int welcome() {
 
 link_struct* receive_links() {
 	link_struct* entered_links = (link_struct*)malloc(sizeof(link_struct));
-	mallocChecker(entered_links);
+	malloc_checker(entered_links);
 	*entered_links = (link_struct){ .link_count = 0, .malloc_count = 4 };
 	entered_links->links = (char**)malloc(entered_links->malloc_count * sizeof(char*));
-	mallocChecker(entered_links->links);
+	malloc_checker(entered_links->links);
 	for (int i = 0; i < entered_links->malloc_count; i++)
 	{
 		entered_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(entered_links->links[i]);
+		malloc_checker(entered_links->links[i]);
 	}
 
 	char buffer[UNIVERSAL_LENGTH];				// buffer to hold strings
@@ -78,11 +78,11 @@ link_struct* receive_links() {
 		// array no space, double it
 		if (entered_links->link_count + 1 > entered_links->malloc_count) {
 			entered_links->links = realloc(entered_links->links, sizeof(char*) * (2 * entered_links->malloc_count));
-			mallocChecker(entered_links->links);
+			malloc_checker(entered_links->links);
 			for (int i = entered_links->malloc_count; i < 2 * entered_links->malloc_count; i++)
 			{
 				entered_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-				mallocChecker(entered_links->links[i]);
+				malloc_checker(entered_links->links[i]);
 			}
 
 			entered_links->malloc_count *= 2;

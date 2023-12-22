@@ -50,11 +50,11 @@ int get_album_details(album_details* album) {
 
 	// Generate file names
 	album->file_names = (char**)malloc(album->song_count * sizeof(char*));
-	mallocChecker(album->file_names);
+	malloc_checker(album->file_names);
 	for (int i = 0; i < album->song_count; i++)
 	{
 		album->file_names[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(album->file_names[i]);
+		malloc_checker(album->file_names[i]);
 	}
 
 	for (int i = 0; i < album->song_count; i++) {
@@ -102,9 +102,9 @@ int get_track_details(album_details* album) {
 
 	// Generate file names
 	album->file_names = (char**)malloc(album->song_count * sizeof(char*));
-	mallocChecker(album->file_names);
+	malloc_checker(album->file_names);
 	album->file_names[0] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-	mallocChecker(album->file_names[0]);
+	malloc_checker(album->file_names[0]);
 
 	sprintf(album->file_names[0], "%s - %s%s", album->artist, album->song_titles[0], SONG_EXTENSION);
 
@@ -117,7 +117,7 @@ u_int verify_validity(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -130,7 +130,7 @@ u_int verify_validity(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -169,7 +169,7 @@ u_int get_title_fields(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -182,7 +182,7 @@ u_int get_title_fields(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -235,21 +235,27 @@ u_int get_title_fields(FILE* fp, album_details* album) {
 		album->song_count = 1;
 
 		album->song_titles = (char**)malloc(album->song_count * sizeof(char*));
-		mallocChecker(album->song_titles);
+		malloc_checker(album->song_titles);
 		album->song_titles[0] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(album->song_titles[0]);
+		malloc_checker(album->song_titles[0]);
 
-		examiner += strlen("<title>");							// Seek to start of album title (<title>example -> example)
-		str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example</title> -> measure until before |)
-		str_length -= 1;										// String contains " ", -1 to truncate
-		strncpy(album->song_titles[0], examiner, str_length);	// Copy track name
-		album->song_titles[0][str_length] = '\0';				// Provide a terminator
+		examiner += strlen("<title>");								// Seek to start of album title (<title>example -> example)
+		str_length = (int)(strstr(examiner, "|") - examiner);		// Measure length (example</title> -> measure until before |)
+		str_length -= 1;											// String contains " ", -1 to truncate
+		strncpy(album->song_titles[0], examiner, str_length);		// Copy track name
+		album->song_titles[0][str_length] = '\0';					// Provide a terminator
 
-		examiner = strstr(examiner, "|");						// Seek to start of album artist
-		examiner += 2;											// Ignore 2 characters of "| "
-		str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
-		strncpy(album->artist, examiner, str_length);			// Copy artist
-		album->artist[str_length] = '\0';						// Provide a terminator
+		examiner = strstr(examiner, "|");							// Seek to start of album artist
+		examiner += 2;												// Ignore 2 characters of "| "
+		if (strstr(examiner, "|") != NULL) {
+			str_length = (int)(strstr(examiner, "|") - examiner);	// Measure length (example | unwanted title -> measure until before |)
+			str_length -= 1;										// String contains " ", -1 to truncate
+		}
+		else {
+			str_length = (int)(strstr(examiner, "<") - examiner);	// Measure length (example</title> -> measure until before <)
+		}
+		strncpy(album->artist, examiner, str_length);				// Copy artist
+		album->artist[str_length] = '\0';							// Provide a terminator
 	}
 
 	free(line);
@@ -263,7 +269,7 @@ u_int get_year(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -278,7 +284,7 @@ u_int get_year(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -341,7 +347,7 @@ u_int get_album_art_link(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -354,7 +360,7 @@ u_int get_album_art_link(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -398,7 +404,7 @@ u_int get_number_songs(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -413,7 +419,7 @@ u_int get_number_songs(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -466,16 +472,16 @@ u_int get_song_titles(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 
 	album->song_titles = (char**)malloc(album->song_count * sizeof(char*));
-	mallocChecker(album->song_titles);
+	malloc_checker(album->song_titles);
 	for (int i = 0; i < album->song_count; i++)
 	{
 		album->song_titles[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(album->song_titles[i]);
+		malloc_checker(album->song_titles[i]);
 	}
 
 	char song_no[8] = "1.";
@@ -489,7 +495,7 @@ u_int get_song_titles(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -544,7 +550,7 @@ u_int get_song_links(FILE* fp, album_details* album) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -557,7 +563,7 @@ u_int get_song_links(FILE* fp, album_details* album) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -594,11 +600,11 @@ u_int get_song_links(FILE* fp, album_details* album) {
 	size_t str_length = 0;
 	examiner = line;
 	album->song_links = (char**)malloc(album->song_count * sizeof(char*));
-	mallocChecker(album->song_links);
+	malloc_checker(album->song_links);
 	for (int i = 0; i < album->song_count; i++)
 	{
 		album->song_links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(album->song_links[i]);
+		malloc_checker(album->song_links[i]);
 
 		examiner = strstr(examiner, "https://t4.bcbits.com");			// Seek to start of a link
 		if (!examiner) {												// If NULL is returned, it usually means a single track's link could not be found.
@@ -669,7 +675,7 @@ u_int is_webpage_everything() {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 	int flag = 0;
@@ -682,7 +688,7 @@ u_int is_webpage_everything() {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -712,14 +718,14 @@ u_int is_webpage_everything() {
 // Reads a provided artist link to get all published work links
 link_struct* get_everything(char* website_link) {
 	link_struct* all_links = (link_struct*)malloc(sizeof(link_struct));
-	mallocChecker(all_links);
+	malloc_checker(all_links);
 	*all_links = (link_struct){ .link_count = 0, .malloc_count = 4 };
 	all_links->links = (char**)malloc(all_links->malloc_count * sizeof(char*));
-	mallocChecker(all_links->links);
+	malloc_checker(all_links->links);
 	for (int i = 0; i < all_links->malloc_count; i++)
 	{
 		all_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-		mallocChecker(all_links->links[i]);
+		malloc_checker(all_links->links[i]);
 	}
 
 	FILE* fp = fopen(WEBPAGE_DUMP, "r");
@@ -727,7 +733,7 @@ link_struct* get_everything(char* website_link) {
 	char chunk[UNIVERSAL_LENGTH];
 	size_t len = sizeof(chunk);		// Store the chunks of text into a line buffer
 	char* line = malloc(len);
-	mallocChecker(line);
+	malloc_checker(line);
 	line[0] = '\0';					// Zeroise the string
 	char* examiner = NULL;
 
@@ -740,7 +746,7 @@ link_struct* get_everything(char* website_link) {
 		if (len - len_used < chunk_used) {
 			len *= 2;
 			line = realloc(line, len);
-			mallocChecker(line);
+			malloc_checker(line);
 		}
 
 		// Copy the chunk to the end of the line buffer
@@ -778,11 +784,11 @@ link_struct* get_everything(char* website_link) {
 		// Link count is always -1 of malloc count (1st +1), if the next insertion is overrunning (2nd +1) expand 
 		if (all_links->link_count + 1 + 1 > all_links->malloc_count) {
 			all_links->links = realloc(all_links->links, sizeof(char*) * (2 * all_links->malloc_count));
-			mallocChecker(all_links->links);
+			malloc_checker(all_links->links);
 			for (int i = all_links->malloc_count; i < 2 * all_links->malloc_count; i++)
 			{
 				all_links->links[i] = (char*)malloc(UNIVERSAL_LENGTH * sizeof(char));
-				mallocChecker(all_links->links[i]);
+				malloc_checker(all_links->links[i]);
 			}
 
 			all_links->malloc_count *= 2;

@@ -68,7 +68,7 @@ u_int album_operation(char* website_link) {
 	}
 
 	album_details* album = (album_details*)malloc(sizeof(album_details));
-	mallocChecker(album);
+	malloc_checker(album);
 
 	strcpy(album->operation_type, "album");
 
@@ -155,7 +155,7 @@ u_int track_operation(char* website_link) {
 	}
 
 	album_details* album = (album_details*)malloc(sizeof(album_details));
-	mallocChecker(album);
+	malloc_checker(album);
 
 	strcpy(album->operation_type, "track");
 
