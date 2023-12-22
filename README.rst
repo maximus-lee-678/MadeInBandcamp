@@ -45,6 +45,7 @@
 
 * Currently does not properly support songs with UTF-8 encoding, retrieves the song but does not load song name or metadata properly.
 * Update to new CLI display method.
+* Use RAM instead of Disk for temp file storage.
 
 🖥️ VS2022 Setup
 ---------------
