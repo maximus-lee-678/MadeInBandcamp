@@ -3,7 +3,7 @@
   :alt: MadeInBandcamp Logo
 
 |bandcamp image| MadeInBandcamp
-=================
+===============================
 
 | Windows utility to download 128kbps tracks from Bandcamp.
 | Automatically performs ID3 tagging on downloaded songs.
